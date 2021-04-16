@@ -1,0 +1,65 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.5.5/types.yaml
+  - plugin:cloudify-utilities-plugin
+
+inputs:
+  resources_list:
+    default:
+      - 10.0.0.0/8
+      - 127.0.0.0/8
+      - 2001:db8::1000
+  single_ip:
+    default: 127.0.0.1
+  from_ip:
+    default: 10.0.0.1
+  to_ip:
+    default: 10.0.0.10
+
+
+node_templates:
+  ip_resources:
+    type: cloudify.nodes.ip_booking.IpReservation
+    properties:
+      resource_config: { get_input: resources_list }
+    capabilities:
+      scalable:
+        properties:
+          min_instances: 1
+          max_instances: 1
+
+  item1:
+    type: cloudify.nodes.ip_booking.IpItem
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    relationships:
+      - type: cloudify.relationships.ip_booking.reserve_ip_item
+        target: ip_resources
+        target_interfaces:
+          cloudify.interfaces.relationship_lifecycle:
+            preconfigure:
+              inputs:
+                ip: { get_input: single_ip }
+
+  item2:
+    type: cloudify.nodes.ip_booking.IpItem
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    relationships:
+      - type: cloudify.relationships.ip_booking.reserve_ip_range_item
+        target: ip_resources
+        target_interfaces:
+          cloudify.interfaces.relationship_lifecycle:
+            preconfigure:
+              inputs:
+                from_ip: { get_input: from_ip }
+                to_ip: { get_input: to_ip }
+
+capabilities:
+  available_ipv4:
+    value: { get_attribute: [ip_resources, available_ipv4] }

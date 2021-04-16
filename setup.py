@@ -51,6 +51,7 @@ setup(
               'cloudify_rest',
               'cloudify_scalelist',
               'cloudify_secrets',
+              'cloudify_ip_booking',
               'cloudify_rollback_workflow'],
     license='LICENSE',
     install_requires=[

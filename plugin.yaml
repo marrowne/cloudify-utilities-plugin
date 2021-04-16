@@ -20,6 +20,8 @@ plugins:
 
   keys: *utilities_plugin
 
+  ip_booking: *utilities_plugin
+
   suspend: *utilities_plugin
 
   terminal: *utilities_plugin
@@ -763,6 +765,23 @@ node_types:
         update:
           implementation: secrets.cloudify_secrets.tasks.read
 
+  cloudify.nodes.ip_booking.IpReservation:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        default: []
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: ip_booking.cloudify_ip_booking.tasks.create_ip_pool
+        delete: ip_booking.cloudify_ip_booking.tasks.delete_ip_pool
+
+  cloudify.nodes.ip_booking.IpItem:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: ip_booking.cloudify_ip_booking.tasks.create_ip_item
+        delete: ip_booking.cloudify_ip_booking.tasks.delete_ip_item
+
 relationships:
 
   load_from_config:
@@ -774,6 +793,21 @@ relationships:
           inputs:
             source_config:
               default: { get_attribute: [TARGET , params ]  }
+
+  cloudify.relationships.ip_booking.reserve_ip_item:
+    derived_from: cloudify.relationships.connected_to
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: ip_booking.cloudify_ip_booking.tasks.reserve_ip
+        unlink: ip_booking.cloudify_ip_booking.tasks.free_ip
+
+  cloudify.relationships.ip_booking.reserve_ip_range_item:
+    derived_from: cloudify.relationships.connected_to
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: ip_booking.cloudify_ip_booking.tasks.reserve_ip_range
+        unlink: ip_booking.cloudify_ip_booking.tasks.free_ip_range
+
 
 workflows:
 
